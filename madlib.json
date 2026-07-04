@@ -1,0 +1,9 @@
+{
+  "name": "whim",
+  "version": "0.0.1",
+  "main": "src/Whim.mad",
+  "importAliases": {
+    ".": "src"
+  }
+}
+

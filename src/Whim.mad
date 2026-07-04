@@ -1,0 +1,102 @@
+import type { Wish } from "Wish"
+
+import Bifunctor from "Bifunctor"
+import {} from "Monad"
+import Wish from "Wish"
+
+
+
+export type Idea t a = Thought(t) | Action(a)
+instance Functor (Idea t) {
+  map = (f, m) => where(m) {
+    Thought(s) =>
+      Thought(s)
+
+    Action(x) =>
+      Action(f(x))
+  }
+}
+instance Application (Idea t) {
+  ap = (mf, m) => where(mf) {
+    Thought(s) =>
+      Thought(s)
+
+    Action(x) =>
+      map(x, m)
+  }
+
+  pure = Action
+}
+instance Monad (Idea t) {
+  chain = (f) => where {
+    Thought(s) =>
+      Thought(s)
+
+    Action(x) =>
+      f(x)
+  }
+
+  of = pure
+}
+instance Bifunctor Idea {
+  bimap = (x, y) => where {
+    Thought(s) =>
+      Thought(x(s))
+
+    Action(s) =>
+      Action(y(s))
+  }
+
+  mapFirst = change
+
+  mapSecond = map
+}
+export change = (fn) => where {
+  Thought(x) =>
+    Thought(fn(x))
+
+  Action(y) =>
+    Action(y)
+}
+export changeAction = map
+instance Semigroup (Idea t a) {
+  assoc = (a, b) => where(#[a, b]) {
+    #[Idea(_), _b] =>
+      _b
+
+    #[_a] =>
+      _a
+  }
+}
+isAbstract :: Idea t a -> Boolean
+export isAbstract = where {
+  Thought(_) =>
+    true
+
+  _ =>
+    false
+}
+export isConcrete = Fn.complement(isAbstract)
+export type Eventual t a = Whim((t -> {}) -> (a -> {}) -> {} -> {})
+instance Functor (Eventual t) {
+  map = (f, m) => Whim((fail, pass) => where(m) { Whim(run) => run(fail, (x) => pass(f(x))) })
+}
+instance Applicative (Eventual e) {
+  ap = (mf, m) => Whim(
+    (badCB, goodCB) => where(#[mf, m]) {
+      #[Whim(runMF), Whim(runM)] =>
+        do {
+          cancel2 = { run: () => {} }
+          cancel1 = runM(badCB, (x) => { cancel2 := { run: runMF(badCB, (f) => goodCB(f(x))) } })
+
+          return () => {
+            cancel1()
+            cancel2.run()
+          }
+        }
+    },
+  )
+
+  pure = good
+}
+export type Later t a = Later(Idea t a -> Eventual t a -> {})

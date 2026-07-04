@@ -1,0 +1,11 @@
+import IO from "IO"
+
+import W from "@/Whim"
+
+
+
+main = () => {
+  pipe(
+    IO.pTrace("Main file for:"),
+  )("whim")
+}

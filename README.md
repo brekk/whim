@@ -1,0 +1,3 @@
+# whim
+
+Wishes modeled abstractly
