@@ -1,10 +1,11 @@
 import {} from "Json"
 import List from "List"
+import String from "String"
 
 
 
 export type Misfit m = Misfit(String, String, String)
-interface Json m => Breakable m {
+interface Breakable m {
   breaks :: m -> Misfit m
 }
 export type Failure
@@ -20,14 +21,14 @@ export failWith = (e) => pipe(
       Failure(a, b, c)
   },
 )(e)
-export contextualIndex = where {
+export toIndex = where {
   ContextualFailure(i, _, _) =>
     i
 
   _ =>
     0
 }
-export contextualBranch = where {
+export toBranch = where {
   ContextualFailure(_, i, _) =>
     i
 
@@ -48,7 +49,33 @@ _sortify = (fn, f) => pipe(
   debris,
   List.sortBy((a, b) => compare(fn(a), fn(b))),
 )(f)
-sortByIndexOrder :: Failure -> List Failure
-export sortByIndexOrder = _sortify(contextualIndex)
-sortByArrivalOrder :: Failure -> List Failure
-export sortByArrivalOrder = _sortify(contextualBranch)
+sortByIndex :: Failure -> List Failure
+export sortByIndex = _sortify(toIndex)
+sortByArrival :: Failure -> List Failure
+export sortByArrival = _sortify(toBranch)
+import IO from "IO"
+
+
+
+showFail :: Failure -> String
+export showFail = (f) => {
+  inner :: Failure -> String
+  inner = where {
+    Failure(t, m, _) =>
+      t ++ ": " ++ m
+
+    Quitter(ms) =>
+      "timed out after " ++ show(ms) ++ "ms"
+
+    MultiFailure(fs) =>
+      "multiple failures: "
+        ++ pipe(
+          map(inner),
+          String.join(", "),
+        )(fs)
+
+    ContextualFailure(i, _, x) =>
+      "#" ++ show(i) ++ " " ++ showFail(x)
+  }
+  return inner(f)
+}

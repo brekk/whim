@@ -1,0 +1,9 @@
+import IO from "IO"
+
+import F from "@/Failure"
+
+
+
+main = () => {
+  IO.pTrace("YO", F.showFail(F.MultiFailure([F.ContextualFailure(0, 0, F.Quitter(188))])))
+}

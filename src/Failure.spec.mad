@@ -1,0 +1,58 @@
+import List from "List"
+
+import Study from "Study"
+
+import {} from "@/Failure"
+import F from "@/Failure"
+
+
+
+abc = F.Failure("a", "b", "c")
+Study.report(F.toIndex, "toIndex", [#[F.ContextualFailure(200, 0, abc), 200], #[abc, 0]])
+Study.report(F.toBranch, "toBranch", [#[F.ContextualFailure(0, 200, abc), 200], #[abc, 0]])
+type MyType = MyType(String, Integer)
+instance Breakable MyType {
+  breaks = where {
+    MyType(a, i) =>
+      F.Misfit("test", a ++ ":" ++ show(i), "whatever")
+  }
+}
+Study.report(
+  F.failWith,
+  "failWith",
+  [#[MyType("whatever", 200), F.Failure("test", "whatever:200", "whatever")]],
+)
+Study.report(F.debris, "debris", [#[F.MultiFailure([abc]), [abc]], #[abc, [abc]]])
+Study.report(
+  Study.caseN2(F.merge),
+  "merge",
+  [#[#[F.Quitter(100), abc], F.MultiFailure([F.Quitter(100), abc])]],
+)
+makeIndexed = F.ContextualFailure($, 100, abc)
+makeBranched = F.ContextualFailure(1, $, abc)
+listRangeBy = (by, a, b) => pipe(
+  List.range(a),
+  map(by),
+)(b)
+listedRange = listRangeBy(makeIndexed)
+indexedRange = listRangeBy(makeBranched)
+Study.report(
+  F.sortByIndex,
+  "sortByIndex",
+  [#[F.MultiFailure(listedRange(5, 10) ++ listedRange(0, 5)), listedRange(0, 10)]],
+)
+Study.report(
+  F.sortByArrival,
+  "sortByArrival",
+  [#[F.MultiFailure(indexedRange(5, 10) ++ indexedRange(0, 5)), indexedRange(0, 10)]],
+)
+Study.report(
+  F.showFail,
+  "showFail",
+  [
+    #[
+      F.MultiFailure(listedRange(0, 5) ++ [F.Quitter(1000)]),
+      "multiple failures: #0 a: b, #1 a: b, #2 a: b, #3 a: b, #4 a: b, timed out after 1000ms",
+    ],
+  ],
+)
