@@ -14,6 +14,7 @@ import Ish from "Wish"
 import { Wish } from "Wish"
 
 import Failure from "@/Failure"
+import { clearTimeout, setTimeout } from "@/Timers"
 
 
 
@@ -152,6 +153,17 @@ export after = (ms, x) => pipe(
   Ish.after(ms),
   Whim,
 )(x)
+export badAfter = (ms, x) => pipe(
+  Wish,
+  Whim,
+)(
+  (badPath, _) => {
+    id = setTimeout(() => { badPath(x) }, ms)
+    return () => {
+      clearTimeout(id)
+    }
+  },
+)
 withTimeout :: Integer -> Whim a -> Whim a
 export withTimeout = (ms, w) => pipe(
   toWish,

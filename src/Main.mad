@@ -8,8 +8,15 @@ import Whim from "@/Whim"
 
 main = () => {
   pipe(
-    Whim.collect,
+    // Whim.collect,
+    Whim.parallel,
     map(IO.pTrace("WHAT?")),
     Whim.fulfill((e) => { IO.pTrace("BAD", e) }, (x) => { IO.pTrace("GOOD", x) }),
-  )([Whim.after(2000, "xxx"), Whim.after(1000, "yyy"), Whim.after(3000, "zzz")])
+  )([
+    Whim.after(20, "xxx"),
+    Whim.badAfter(40, F.Failure("bad", "really bad", "terrible")),
+    Whim.after(10, "yyy"),
+    Whim.badAfter(90, F.Failure("shit", "fuck", "damn")),
+    Whim.after(30, "zzz"),
+  ])
 }
