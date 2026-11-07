@@ -21,17 +21,15 @@ import { clearTimeout, setTimeout } from "@/Timers"
 // WHIM BASED ARCHITECTURE
 
 export type Whim a = Whim(Wish Failure a)
-export idea = pipe(
+export good = pipe(
   Ish.good,
   Whim,
 )
-export good = idea
-nightmare :: Failure -> Whim a
-export nightmare = pipe(
+bad :: Failure -> Whim a
+export bad = pipe(
   Ish.bad,
   Whim,
 )
-export bad = nightmare
 export toWish = where {
   Whim(w) =>
     w
@@ -47,7 +45,7 @@ instance Functor Whim {
 instance Applicative Whim {
   ap = (mf, m) => Whim(ap(toWish(mf), toWish(m)))
 
-  pure = idea
+  pure = good
 }
 instance Monad Whim {
   chain = (f, m) => Whim(
@@ -80,13 +78,14 @@ instance Semigroup (Whim a) {
 break :: Breakable e => e -> Whim a
 export break = pipe(
   Failure.failWith,
-  nightmare,
+  bad,
 )
 mapFailure :: (Failure -> Failure) -> Whim a -> Whim a
 export mapFailure = (f, w) => pipe(
-  Ish.mapRej($, toWish(w)),
+  toWish,
+  Ish.mapRej(f),
   Whim,
-)(f)
+)(w)
 catchFail :: (Failure -> Whim a) -> Whim a -> Whim a
 export catchFail = (handler, w) => Whim(
   Ish.chainRej(
@@ -101,10 +100,10 @@ catchTag :: String -> (Failure -> Whim a) -> Whim a -> Whim a
 export catchTag = (tag, handler, w) => catchFail(
   (f) => where(f) {
     Failure.Failure(_t, _, _) =>
-      _t == tag ? handler(f) : nightmare(f)
+      _t == tag ? handler(f) : bad(f)
 
     _ =>
-      nightmare(f)
+      bad(f)
   },
   w,
 )
@@ -127,16 +126,16 @@ export attempt = (w) => Whim(
 settle :: Either Failure b -> Either Failure {} -> Whim b
 export settle = (outcome, released) => where(#[outcome, released]) {
   #[Right(a), Right(_)] =>
-    idea(a)
+    good(a)
 
   #[Right(_), Left(l)] =>
-    nightmare(l)
+    bad(l)
 
   #[Left(l), Right(_)] =>
-    nightmare(l)
+    bad(l)
 
   #[Left(l1), Left(l2)] =>
-    nightmare(Failure.merge(l1, l2))
+    bad(Failure.merge(l1, l2))
 }
 // adjust when we potentially handle cancellation
 bracket :: (a -> Whim {}) -> (a -> Whim b) -> Whim a -> Whim b
@@ -270,7 +269,7 @@ export raceN = (n, whims) => {
         Ish.mapRej(
           (e) => {
             branch := branch + 1
-            fails := [Failure.ContextualFailure(i, branch, e), ...fails]
+            fails := List.append(Failure.ContextualFailure(i, branch, e), fails)
             return {}
           },
         ),

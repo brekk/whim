@@ -1,0 +1,49 @@
+import Test from "Test"
+import Wish from "Wish"
+
+import Study from "Study"
+
+import F from "@/Failure"
+import W from "@/Whim"
+
+
+
+handleErrors = (rawFail) => Wish.mapRej(
+  where {
+    F.Failure(_, _, x) =>
+      Test.Error(x)
+
+    _ =>
+      Test.Error(rawFail)
+  },
+)
+Study.reportAsync(
+  pipe(
+    W.good,
+    W.toWish,
+    handleErrors("good with async adapter"),
+  ),
+  "good with async adapter!",
+  [#[200, 200]],
+)
+Study.asyncFail(
+  pipe(
+    W.bad,
+    W.toWish,
+    handleErrors("bad with async adapter"),
+  ),
+  "bad with async adapter!",
+  [#[F.Failure("a", "b", "yes"), Test.Error("yes")]],
+)
+Study.reportAsync(
+  pipe(
+    W.good,
+    map((x) => x * 2),
+    ap(pure((x) => x / 3)),
+    chain((x) => of(x * 7)),
+    W.toWish,
+    handleErrors("whim with map"),
+  ),
+  "whim with map + ap",
+  [#[200, ((200 * 2) / 3) * 7]],
+)
