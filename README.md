@@ -1,3 +1,6 @@
 # whim
 
-Wishes modeled abstractly
+Model asynchrony without the bad path hassles
+
+<!-- $MADLIB.projectBadge -->
+<!-- $MADLIB.json.version -->
