@@ -1,0 +1,139 @@
+import type { Either } from "Either"
+import type { Wish } from "Wish"
+
+import {} from "Applicative"
+import { Left, Right } from "Either"
+import {} from "Functor"
+import {} from "Json"
+import List from "List"
+import {} from "Monad"
+import {} from "MonadRec"
+import Wish from "Wish"
+
+
+
+export type Misfit m = Misfit(String, String, String)
+interface Json m => Breakable m {
+  breaks :: m -> Misfit m
+}
+export type Failure
+  = Failure(String, String, String)
+  | Quitter(Integer)
+  | MultiFailure(List Failure)
+  | ContextualFailure(Integer, Integer, Failure)
+failWith :: Breakable m => m -> Failure
+export failWith = (e) => pipe(
+  breaks,
+  where {
+    Misfit(a, b, c) =>
+      Failure(a, b, c)
+  },
+)(e)
+export contextualIndex = where {
+  ContextualFailure(i, _, _) =>
+    i
+
+  _ =>
+    0
+}
+export contextualBranch = where {
+  ContextualFailure(_, i, _) =>
+    i
+
+  _ =>
+    0
+}
+trash :: Failure -> List Failure
+export trash = (x) => where(x) {
+  MultiFailure(fs) =>
+    fs
+
+  _ =>
+    [x]
+}
+mergeTrash :: Failure -> Failure -> Failure
+export mergeTrash = (a, b) => MultiFailure(trash(a) ++ trash(b))
+sortify = (fn, f) => pipe(
+  trash,
+  List.sortBy((a, b) => compare(fn(a), fn(b))),
+)(f)
+sortByIndexOrder :: Failure -> List Failure
+export sortByIndexOrder = sortify(contextualIndex)
+sortByArrivalOrder :: Failure -> List Failure
+export sortByArrivalOrder = sortify(contextualBranch)
+// WHIM BASED ARCHITECTURE
+
+export type Whim a = Whim(Wish Failure a)
+export toWish = where {
+  Whim(w) =>
+    w
+}
+instance Functor Whim {
+  map = (f, w) => Whim(map(f, toWish(w)))
+}
+instance Applicative Whim {
+  ap = (mf, m) => Whim(ap(toWish(mf), toWish(m)))
+
+  pure = (a) => Whim(Wish.good(a))
+}
+instance Monad Whim {
+  chain = (f, m) => Whim(
+    chain(
+      pipe(
+        f,
+        toWish,
+      ),
+      toWish(m),
+    ),
+  )
+
+  of = pure
+}
+instance MonadRec Whim {
+  tailRecM = (f, a) => Whim(
+    tailRecM(
+      pipe(
+        f,
+        toWish,
+      ),
+      a,
+    ),
+  )
+}
+instance Semigroup (Whim a) {
+  assoc = (a, b) => catchVibe((first) => mapFailure(mergeTrash(first), b), a)
+}
+throwFailure :: Failure -> Whim a
+export throwFailure = pipe(
+  Wish.bad,
+  Whim,
+)
+break :: Breakable e => e -> Whim a
+export break = (e) => throwFailure(failWith(e))
+mapFailure :: (Failure -> Failure) -> Whim a -> Whim a
+export mapFailure = (f, w) => Whim(Wish.mapRej(f, toWish(w)))
+catchVibe :: (Failure -> Whim a) -> Whim a -> Whim a
+export catchVibe = (handler, w) => Whim(
+  Wish.chainRej(
+    pipe(
+      handler,
+      toWish,
+    ),
+    toWish(w),
+  ),
+)
+catchTag :: String -> (Failure -> Whim a) -> Whim a -> Whim a
+export catchTag = (tag, handler, w) => catchVibe(
+  (f) => where(f) {
+    Failure(_t, _, _) =>
+      _t == tag ? handler(f) : throwFailure(f)
+
+    _ =>
+      throwFailure(f)
+  },
+  w,
+)
+attempt :: Whim a -> Whim (Either Failure a)
+export attempt = (w) => Whim(
+  Wish.bichain((f) => Wish.good(Left(f)), (a) => Wish.good(Right(a)), toWish(w)),
+)
