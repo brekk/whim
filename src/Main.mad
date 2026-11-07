@@ -1,26 +1,15 @@
 import IO from "IO"
+import Wish from "Wish"
 
 import F from "@/Failure"
-import W from "@/Whim"
+import Whim from "@/Whim"
 
 
 
 main = () => {
   pipe(
-    ap(W.idea((x, y) => x / y)),
-    IO.pTrace("yo"),
-    ap($, W.idea(10)),
-    // W.fulfill((e) => { IO.pTrace("BAD", e) }, (x) => { IO.pTrace("GOOD", x) }),
-  )(W.idea(5))
-  // GOOD 0.5
-
-  pipe(
-    IO.pTrace("yo"),
-    // becomes x
-    ap($, W.idea(12)),
-    // becomes y
-    ap($, W.idea(4)),
-    // Wish.fulfill((e) => { IO.pTrace("BAD", e) }, (x) => { IO.pTrace("GOOD", x) }),
-  )(W.idea((x, y) => x * 2 / y))
-  // GOOD 6
+    Whim.collect,
+    map(IO.pTrace("WHAT?")),
+    Whim.fulfill((e) => { IO.pTrace("BAD", e) }, (x) => { IO.pTrace("GOOD", x) }),
+  )([Whim.after(2000, "xxx"), Whim.after(1000, "yyy"), Whim.after(3000, "zzz")])
 }
