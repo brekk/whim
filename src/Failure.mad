@@ -1,0 +1,54 @@
+import {} from "Json"
+import List from "List"
+
+
+
+export type Misfit m = Misfit(String, String, String)
+interface Json m => Breakable m {
+  breaks :: m -> Misfit m
+}
+export type Failure
+  = Failure(String, String, String)
+  | Quitter(Integer)
+  | MultiFailure(List Failure)
+  | ContextualFailure(Integer, Integer, Failure)
+failWith :: Breakable m => m -> Failure
+export failWith = (e) => pipe(
+  breaks,
+  where {
+    Misfit(a, b, c) =>
+      Failure(a, b, c)
+  },
+)(e)
+export contextualIndex = where {
+  ContextualFailure(i, _, _) =>
+    i
+
+  _ =>
+    0
+}
+export contextualBranch = where {
+  ContextualFailure(_, i, _) =>
+    i
+
+  _ =>
+    0
+}
+debris :: Failure -> List Failure
+export debris = (x) => where(x) {
+  MultiFailure(fs) =>
+    fs
+
+  _ =>
+    [x]
+}
+merge :: Failure -> Failure -> Failure
+export merge = (a, b) => MultiFailure(debris(a) ++ debris(b))
+_sortify = (fn, f) => pipe(
+  debris,
+  List.sortBy((a, b) => compare(fn(a), fn(b))),
+)(f)
+sortByIndexOrder :: Failure -> List Failure
+export sortByIndexOrder = _sortify(contextualIndex)
+sortByArrivalOrder :: Failure -> List Failure
+export sortByArrivalOrder = _sortify(contextualBranch)
