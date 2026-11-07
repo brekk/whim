@@ -53,10 +53,6 @@ sortByIndex :: Failure -> List Failure
 export sortByIndex = _sortify(toIndex)
 sortByArrival :: Failure -> List Failure
 export sortByArrival = _sortify(toBranch)
-import IO from "IO"
-
-
-
 showFail :: Failure -> String
 export showFail = (f) => {
   inner :: Failure -> String

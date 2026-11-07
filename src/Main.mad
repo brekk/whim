@@ -1,9 +1,26 @@
 import IO from "IO"
 
 import F from "@/Failure"
+import W from "@/Whim"
 
 
 
 main = () => {
-  IO.pTrace("YO", F.showFail(F.MultiFailure([F.ContextualFailure(0, 0, F.Quitter(188))])))
+  pipe(
+    ap(W.idea((x, y) => x / y)),
+    IO.pTrace("yo"),
+    ap($, W.idea(10)),
+    // W.fulfill((e) => { IO.pTrace("BAD", e) }, (x) => { IO.pTrace("GOOD", x) }),
+  )(W.idea(5))
+  // GOOD 0.5
+
+  pipe(
+    IO.pTrace("yo"),
+    // becomes x
+    ap($, W.idea(12)),
+    // becomes y
+    ap($, W.idea(4)),
+    // Wish.fulfill((e) => { IO.pTrace("BAD", e) }, (x) => { IO.pTrace("GOOD", x) }),
+  )(W.idea((x, y) => x * 2 / y))
+  // GOOD 6
 }
