@@ -1,15 +1,54 @@
+import type { Maybe } from "Maybe"
+
 import List from "List"
+import { Just, Nothing } from "Maybe"
 
 import Study from "Study"
 
 import {} from "@/Failure"
 import F from "@/Failure"
+import { MAX_INTEGER } from "@/Number"
 
 
 
 abc = F.Failure("a", "b", "c")
-Study.report(F.toIndex, "toIndex", [#[F.ContextualFailure(200, 0, abc), 200], #[abc, 0]])
-Study.report(F.toBranch, "toBranch", [#[F.ContextualFailure(0, 200, abc), 200], #[abc, 0]])
+Study.report(
+  F.tag,
+  "tag",
+  [
+    #[F.Failure("yes", "xx", "yy"), Just("yes")],
+    #[F.Quitter(101010), Nothing],
+    #[F.ContextualFailure(0, 0, F.Failure("no", "nope", "nein")), Just("no")],
+  ],
+)
+Study.report(
+  F.message,
+  "message",
+  [
+    #[F.Failure("yes", "xx", "yy"), Just("xx")],
+    #[F.Quitter(101010), Nothing],
+    #[F.ContextualFailure(0, 0, F.Failure("no", "nope", "nein")), Just("nope")],
+  ],
+)
+Study.report(
+  F.context,
+  "context",
+  [
+    #[F.Failure("yes", "xx", "yy"), Just("yy")],
+    #[F.Quitter(101010), Nothing],
+    #[F.ContextualFailure(0, 0, F.Failure("no", "nope", "nein")), Just("nein")],
+  ],
+)
+Study.report(
+  F.toIndex,
+  "toIndex",
+  [#[F.ContextualFailure(200, 0, abc), 200], #[abc, MAX_INTEGER], #[F.Quitter(1000), MAX_INTEGER]],
+)
+Study.report(
+  F.toBranch,
+  "toBranch",
+  [#[F.ContextualFailure(0, 200, abc), 200], #[abc, MAX_INTEGER]],
+)
 type MyType = MyType(String, Integer)
 instance Breakable MyType {
   breaks = where {
@@ -26,7 +65,10 @@ Study.report(F.debris, "debris", [#[F.MultiFailure([abc]), [abc]], #[abc, [abc]]
 Study.report(
   Study.caseN2(F.merge),
   "merge",
-  [#[#[F.Quitter(100), abc], F.MultiFailure([F.Quitter(100), abc])]],
+  [
+    #[#[F.Quitter(100), abc], F.MultiFailure([F.Quitter(100), abc])],
+    #[#[F.ContextualFailure(0, 0, abc), abc], F.MultiFailure([abc, abc])],
+  ],
 )
 makeIndexed = F.ContextualFailure($, 100, abc)
 makeBranched = F.ContextualFailure(1, $, abc)

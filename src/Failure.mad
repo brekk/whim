@@ -1,18 +1,56 @@
+import type { Maybe } from "Maybe"
+
 import {} from "Json"
 import List from "List"
+import { Just, Nothing } from "Maybe"
 import String from "String"
 
+import { MAX_INTEGER } from "@/Number"
 
 
-export type Misfit m = Misfit(String, String, String)
+
+export type Misfit = Misfit(String, String, String)
 interface Breakable m {
-  breaks :: m -> Misfit m
+  breaks :: m -> Misfit
 }
 export type Failure
   = Failure(String, String, String)
   | Quitter(Integer)
   | MultiFailure(List Failure)
   | ContextualFailure(Integer, Integer, Failure)
+tag :: Failure -> Maybe String
+export tag = where {
+  Failure(t, _, _) =>
+    Just(t)
+
+  ContextualFailure(_, _, Failure(t, _, _)) =>
+    Just(t)
+
+  _ =>
+    Nothing
+}
+message :: Failure -> Maybe String
+export message = where {
+  Failure(_, m, _) =>
+    Just(m)
+
+  ContextualFailure(_, _, Failure(_, m, _)) =>
+    Just(m)
+
+  _ =>
+    Nothing
+}
+context :: Failure -> Maybe String
+export context = where {
+  Failure(_, _, c) =>
+    Just(c)
+
+  ContextualFailure(_, _, Failure(_, _, c)) =>
+    Just(c)
+
+  _ =>
+    Nothing
+}
 failWith :: Breakable m => m -> Failure
 export failWith = (e) => pipe(
   breaks,
@@ -26,19 +64,22 @@ export toIndex = where {
     i
 
   _ =>
-    0
+    MAX_INTEGER
 }
 export toBranch = where {
   ContextualFailure(_, i, _) =>
     i
 
   _ =>
-    0
+    MAX_INTEGER
 }
 debris :: Failure -> List Failure
 export debris = (x) => where(x) {
   MultiFailure(fs) =>
     fs
+
+  ContextualFailure(_, _, f) =>
+    debris(f)
 
   _ =>
     [x]
@@ -71,7 +112,7 @@ export showFail = (f) => {
         )(fs)
 
     ContextualFailure(i, _, x) =>
-      "#" ++ show(i) ++ " " ++ showFail(x)
+      "#" ++ show(i) ++ " " ++ inner(x)
   }
   return inner(f)
 }

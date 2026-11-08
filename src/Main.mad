@@ -7,16 +7,26 @@ import Whim from "@/Whim"
 
 
 main = () => {
+  danger = 2.0 / 0.0
+  danger2 = 2 / 0
+  IO.pTrace("XXXXX", danger)
+  IO.pTrace("XXXXX", danger2)
+  // Whim.badAfter(2000, (_) => F.Quitter(1000), "aaa"),
+  testrunners = []
+  runners = [
+    Whim.after(20, "xxx"),
+    Whim.after(10, "yyy"),
+    Whim.after(30, "zzz"),
+    Whim.badAfter(20, F.Failure("a", "b"), "Broken!"),
+    Whim.after(80, "www"),
+  ]
   pipe(
-    // Whim.collect,
-    Whim.parallel,
+    IO.pTrace("before"),
+    Whim.race,
     map(IO.pTrace("WHAT?")),
     Whim.fulfill((e) => { IO.pTrace("BAD", e) }, (x) => { IO.pTrace("GOOD", x) }),
-  )([
-    Whim.after(20, "xxx"),
-    Whim.badAfter(40, F.Failure("bad", "really bad", "terrible")),
-    Whim.after(10, "yyy"),
-    Whim.badAfter(90, F.Failure("shit", "fuck", "damn")),
-    Whim.after(30, "zzz"),
-  ])
+    (xxx) => {
+      IO.pTrace("FINALLY!", xxx)
+    },
+  )(runners)
 }

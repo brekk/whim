@@ -1,3 +1,6 @@
+import Either from "Either"
+import IO from "IO"
+import List from "List"
 import Test from "Test"
 import Wish from "Wish"
 
@@ -8,19 +11,22 @@ import W from "@/Whim"
 
 
 
-handleErrors = (rawFail) => Wish.mapRej(
-  where {
-    F.Failure(_, _, x) =>
-      Test.Error(x)
+handleErrors :: String -> W.Whim a -> Wish Test.AssertionError a
+handleErrors = (rawFail) => pipe(
+  W.toWish,
+  Wish.mapRej(
+    where {
+      F.Failure(_, _, x) =>
+        Test.Error(x)
 
-    _ =>
-      Test.Error(rawFail)
-  },
+      _ =>
+        Test.Error(rawFail)
+    },
+  ),
 )
 Study.reportAsync(
   pipe(
     W.good,
-    W.toWish,
     handleErrors("good with async adapter"),
   ),
   "good with async adapter!",
@@ -29,7 +35,6 @@ Study.reportAsync(
 Study.asyncFail(
   pipe(
     W.bad,
-    W.toWish,
     handleErrors("bad with async adapter"),
   ),
   "bad with async adapter!",
@@ -41,9 +46,80 @@ Study.reportAsync(
     map((x) => x * 2),
     ap(pure((x) => x / 3)),
     chain((x) => of(x * 7)),
-    W.toWish,
-    handleErrors("whim with map"),
+    handleErrors("whim fp combos"),
   ),
-  "whim with map + ap",
+  "whim fp combos",
   [#[200, ((200 * 2) / 3) * 7]],
+)
+Study.asyncFail(
+  pipe(
+    W.bad,
+    (x) => x ++ W.bad(F.Failure("bad", "deets", "sir")),
+    W.toWish,
+    Wish.mapRej(
+      where {
+        F.MultiFailure(list) =>
+          Test.AssertionError(show(List.length(list)), "2")
+
+        _ =>
+          Test.NotImplemented
+      },
+    ),
+  ),
+  "whim bad path aggregates failures",
+  [#[F.Failure("bad", "info", "there"), Test.AssertionError("2", "2")]],
+)
+fromWish :: Wish String a -> Wish Test.AssertionError a
+fromWish = pipe(
+  W.fromWish((v) => F.Failure("fromWishTesting", "message", v)),
+  handleErrors("fromWish"),
+)
+Study.asyncReport(fromWish, "fromWish", [#[(Wish.good("test") :: Wish String String), "test"]])
+Study.asyncFail(fromWish, "fromWish", [#[(Wish.bad("test") :: Wish String {}), Test.Error("test")]])
+catchTag = pipe(
+  W.catchTag(
+    "test",
+    where {
+      F.Failure(s, k, v) =>
+        W.bad(F.Failure(s, k, v))
+
+      _ =>
+        W.bad(F.Failure("test", "catchTag", "barfo"))
+    },
+  ),
+  handleErrors("catchTag"),
+)
+Study.asyncFail(
+  catchTag,
+  "catchTag fail",
+  [
+    #[W.bad(F.Failure("test", "yo", "yojimbo")), Test.Error("yojimbo")],
+    #[W.bad(F.Quitter(2000)), Test.Error("catchTag")],
+  ],
+)
+Study.asyncReport(catchTag, "catchTag", [#[W.good("whatever"), "whatever"]])
+Study.asyncReport(
+  pipe(
+    W.attempt,
+    handleErrors("attempt"),
+  ),
+  "attempt",
+  [
+    #[W.good("value"), Either.Right("value")],
+    #[W.bad(F.Quitter(1000)), Either.Left(F.Quitter(1000))],
+  ],
+)
+settle = pipe(
+  Study.caseN2(W.settle),
+  handleErrors("settle"),
+)
+Study.asyncReport(settle, "settle", [#[#[Either.Right("yes"), Either.Right("no")], "yes"]])
+Study.asyncFail(
+  settle,
+  "settle fail",
+  [
+    #[#[Either.Right({}), Either.Left(F.Quitter(1000))], Test.Error("settle")],
+    #[#[Either.Left(F.Quitter(1000)), Either.Right({})], Test.Error("settle")],
+    #[#[Either.Left(F.Quitter(1000)), Either.Left(F.Quitter(2020))], Test.Error("settle")],
+  ],
 )
