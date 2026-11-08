@@ -1,5 +1,5 @@
 {
-  "buildHash": "2c35c60fc441d4ecdfbab57587159354",
+  "buildHash": "d989b5a9fc5799256bc2dec419f0272c",
   "jsApi": {
     "apiInstances": [
       "Semigroup (Whim n590647783936702427)",
@@ -11,39 +11,43 @@
     "apiAliases": {},
     "apiInterfaces": {
       "Breakable j590634589797163895": {
-        "breaks": "m -> Misfit m"
+        "breaks": "m -> Misfit"
       }
     },
     "apiNames": {
       "fulfill": "(Failure -> {}) -> (a -> {}) -> Whim a -> {} -> {}",
       "bracket": "(a -> Whim {}) -> (a -> Whim b) -> Whim a -> Whim b",
       "bad": "Failure -> Whim a",
-      "badAfter": "Integer -> Failure -> Whim a",
+      "badAfter": "Integer -> (a -> Failure) -> a -> Whim a",
       "collect": "List (Whim a) -> Whim (List a)",
       "fromWish": "(a -> Failure) -> Wish a b -> Whim b",
       "finally": "Whim {} -> Whim a -> Whim a",
-      "src/Timers.mad#clearTimeout": "TimerId -> {}",
+      "src/Number.mad#MAX_INTEGER": "Integer",
       "catchTag": "String -> (Failure -> Whim a) -> Whim a -> Whim a",
       "collectN": "Integer -> List (Whim a) -> Whim (List a)",
       "attempt": "Whim a -> Whim (Either Failure a)",
       "src/Failure.mad#debris": "Failure -> List Failure",
+      "src/Failure.mad#message": "Failure -> Maybe String",
       "src/Failure.mad#merge": "Failure -> Failure -> Failure",
       "fromBreakableWish": "Breakable a => Wish a b -> Whim b",
       "race": "List (Whim a) -> Whim a",
-      "src/Timers.mad#setTimeout": "({} -> {}) -> Integer -> TimerId",
       "good": "a -> Whim a",
       "src/Failure.mad#failWith": "Breakable a => a -> Failure",
       "catchFail": "(Failure -> Whim a) -> Whim a -> Whim a",
       "mapFailure": "(Failure -> Failure) -> Whim a -> Whim a",
+      "src/Failure.mad#tag": "Failure -> Maybe String",
+      "src/Number.mad#INFINITY": "Float",
       "src/Failure.mad#sortByArrival": "Failure -> List Failure",
       "src/Failure.mad#showFail": "Failure -> String",
+      "src/Failure.mad#context": "Failure -> Maybe String",
       "parallelN": "Integer -> List (Whim a) -> Whim (List a)",
       "after": "Integer -> a -> Whim a",
       "toWish": "Whim a -> Wish Failure a",
+      "src/Number.mad#NEGATIVE_INFINITY": "Float",
       "src/Failure.mad#sortByIndex": "Failure -> List Failure",
       "parallel": "List (Whim a) -> Whim (List a)",
       "break": "Breakable a => a -> Whim b",
-      "settle": "Either Failure a -> Either Failure {} -> Whim a",
+      "settle": "Either Failure a -> Either Failure b -> Whim a",
       "src/Failure.mad#toBranch": "Failure -> Integer",
       "src/Failure.mad#toIndex": "Failure -> Integer",
       "raceN": "Integer -> List (Whim a) -> Whim a",
@@ -56,7 +60,7 @@
         "MultiFailure (List Failure)",
         "ContextualFailure Integer Integer Failure"
       ],
-      "src/Failure.mad#Misfit m": [
+      "src/Failure.mad#Misfit": [
         "Misfit String String String"
       ],
       "Whim a": [
@@ -75,39 +79,43 @@
     "apiAliases": {},
     "apiInterfaces": {
       "Breakable j590634589797163895": {
-        "breaks": "m -> Misfit m"
+        "breaks": "m -> Misfit"
       }
     },
     "apiNames": {
       "fulfill": "(Failure -> {}) -> (a -> {}) -> Whim a -> {} -> {}",
       "bracket": "(a -> Whim {}) -> (a -> Whim b) -> Whim a -> Whim b",
       "bad": "Failure -> Whim a",
-      "badAfter": "Integer -> Failure -> Whim a",
+      "badAfter": "Integer -> (a -> Failure) -> a -> Whim a",
       "collect": "List (Whim a) -> Whim (List a)",
       "fromWish": "(a -> Failure) -> Wish a b -> Whim b",
       "finally": "Whim {} -> Whim a -> Whim a",
-      "src/Timers.mad#clearTimeout": "TimerId -> {}",
+      "src/Number.mad#MAX_INTEGER": "Integer",
       "catchTag": "String -> (Failure -> Whim a) -> Whim a -> Whim a",
       "collectN": "Integer -> List (Whim a) -> Whim (List a)",
       "attempt": "Whim a -> Whim (Either Failure a)",
       "src/Failure.mad#debris": "Failure -> List Failure",
+      "src/Failure.mad#message": "Failure -> Maybe String",
       "src/Failure.mad#merge": "Failure -> Failure -> Failure",
       "fromBreakableWish": "Breakable a => Wish a b -> Whim b",
       "race": "List (Whim a) -> Whim a",
-      "src/Timers.mad#setTimeout": "({} -> {}) -> Integer -> TimerId",
       "good": "a -> Whim a",
       "src/Failure.mad#failWith": "Breakable a => a -> Failure",
       "catchFail": "(Failure -> Whim a) -> Whim a -> Whim a",
       "mapFailure": "(Failure -> Failure) -> Whim a -> Whim a",
+      "src/Failure.mad#tag": "Failure -> Maybe String",
+      "src/Number.mad#INFINITY": "Float",
       "src/Failure.mad#sortByArrival": "Failure -> List Failure",
       "src/Failure.mad#showFail": "Failure -> String",
+      "src/Failure.mad#context": "Failure -> Maybe String",
       "parallelN": "Integer -> List (Whim a) -> Whim (List a)",
       "after": "Integer -> a -> Whim a",
       "toWish": "Whim a -> Wish Failure a",
+      "src/Number.mad#NEGATIVE_INFINITY": "Float",
       "src/Failure.mad#sortByIndex": "Failure -> List Failure",
       "parallel": "List (Whim a) -> Whim (List a)",
       "break": "Breakable a => a -> Whim b",
-      "settle": "Either Failure a -> Either Failure {} -> Whim a",
+      "settle": "Either Failure a -> Either Failure b -> Whim a",
       "src/Failure.mad#toBranch": "Failure -> Integer",
       "src/Failure.mad#toIndex": "Failure -> Integer",
       "raceN": "Integer -> List (Whim a) -> Whim a",
@@ -120,7 +128,7 @@
         "MultiFailure (List Failure)",
         "ContextualFailure Integer Integer Failure"
       ],
-      "src/Failure.mad#Misfit m": [
+      "src/Failure.mad#Misfit": [
         "Misfit String String String"
       ],
       "Whim a": [
@@ -128,5 +136,5 @@
       ]
     }
   },
-  "versionHash": "25e64aa754c310d45c1e084d574c1bb0"
+  "versionHash": "47cd76e43f74bbc2e1baaf194d07e1fa"
 }
