@@ -123,3 +123,74 @@ Study.asyncFail(
     #[#[Either.Left(F.Quitter(1000)), Either.Left(F.Quitter(2020))], Test.Error("settle")],
   ],
 )
+collect = pipe(
+  W.collect,
+  handleErrors("collect"),
+)
+Study.asyncReport(collect, "collect", [#[[W.good("a"), W.good("b"), W.good("c")], ["a", "b", "c"]]])
+Study.asyncFail(
+  pipe(
+    W.collect,
+    W.toWish,
+    map(() => ({})),
+    Wish.mapRej(
+      where {
+        F.MultiFailure(list) =>
+          Test.Error(show(list))
+
+        _ =>
+          Test.Error("sad")
+      },
+    ),
+  ),
+  "collect fail",
+  [
+    #[
+      [W.bad(F.Failure("a", "b", "c")), W.bad(F.Failure("d", "e", "f"))],
+      Test.Error(
+        `[ContextualFailure(0, 1, Failure("a", "b", "c")), ContextualFailure(1, 2, Failure("d", "e", "f"))]`,
+      ),
+    ],
+    #[
+      [W.good("yes"), W.bad(F.Failure("a", "b", "c"))],
+      Test.Error(`[ContextualFailure(1, 1, Failure("a", "b", "c"))]`),
+    ],
+    #[
+      [W.bad(F.Failure("a", "b", "c")), W.good("yes")],
+      Test.Error(`[ContextualFailure(0, 1, Failure("a", "b", "c"))]`),
+    ],
+  ],
+)
+Study.asyncFail(
+  pipe(
+    W.race,
+    W.toWish,
+    map(() => ({})),
+    Wish.mapRej(
+      where {
+        F.MultiFailure(list) =>
+          Test.Error(show(list))
+
+        _ =>
+          Test.Error("sad")
+      },
+    ),
+  ),
+  "race",
+  [
+    #[
+      [W.bad(F.Failure("a", "b", "c")), W.bad(F.Failure("d", "e", "f"))],
+      Test.Error(
+        `[ContextualFailure(0, 0, Failure("a", "b", "c")), ContextualFailure(1, 1, Failure("d", "e", "f"))]`,
+      ),
+    ],
+    #[
+      [W.good("yes"), W.bad(F.Failure("a", "b", "c"))],
+      Test.Error(`[ContextualFailure(1, 1, Failure("a", "b", "c"))]`),
+    ],
+    #[
+      [W.bad(F.Failure("a", "b", "c")), W.good("yes")],
+      Test.Error(`[ContextualFailure(0, 1, Failure("a", "b", "c"))]`),
+    ],
+  ],
+)

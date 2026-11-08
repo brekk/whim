@@ -113,18 +113,6 @@ export catchTag = (tag, handler, w) => catchBy(
   handler,
   w,
 )
-/*
-export catchTag = (tag, handler, w) => catchFail(
-  (f) => where(Failure.tag(f)) {
-    Just(_t) =>
-      _t == tag ? handler(f) : bad(f)
-
-    _ =>
-      bad(f)
-  },
-  w,
-)
-*/
 attempt :: Whim a -> Whim (Either Failure a)
 export attempt = (w) => Whim(
   pipe(
