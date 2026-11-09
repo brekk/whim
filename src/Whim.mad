@@ -11,8 +11,7 @@ import List from "List"
 import { Just, Nothing } from "Maybe"
 import {} from "Monad"
 import {} from "MonadRec"
-import Ish from "Wish"
-import { Wish } from "Wish"
+import Wish from "Wish"
 
 import Failure from "@/Failure"
 
@@ -22,12 +21,12 @@ import Failure from "@/Failure"
 
 export type Whim a = Whim(Wish Failure a)
 export good = pipe(
-  Ish.good,
+  Wish.good,
   Whim,
 )
 bad :: Failure -> Whim a
 export bad = pipe(
-  Ish.bad,
+  Wish.bad,
   Whim,
 )
 export toWish = where {
@@ -36,7 +35,7 @@ export toWish = where {
 }
 fromWish :: (e -> Failure) -> Wish e a -> Whim a
 export fromWish = (badPath, w) => pipe(
-  Ish.mapRej(badPath),
+  Wish.mapRej(badPath),
   Whim,
 )(w)
 instance Functor Whim {
@@ -83,12 +82,12 @@ export break = pipe(
 mapFailure :: (Failure -> Failure) -> Whim a -> Whim a
 export mapFailure = (f, w) => pipe(
   toWish,
-  Ish.mapRej(f),
+  Wish.mapRej(f),
   Whim,
 )(w)
 catchFail :: (Failure -> Whim a) -> Whim a -> Whim a
 export catchFail = (handler, w) => Whim(
-  Ish.chainRej(
+  Wish.chainRej(
     pipe(
       handler,
       toWish,
@@ -117,14 +116,14 @@ attempt :: Whim a -> Whim (Either Failure a)
 export attempt = (w) => Whim(
   pipe(
     toWish,
-    Ish.bichain(
+    Wish.bichain(
       pipe(
         Left,
-        Ish.good,
+        Wish.good,
       ),
       pipe(
         Right,
-        Ish.good,
+        Wish.good,
       ),
     ),
   )(w),
@@ -144,6 +143,10 @@ export settle = (outcome, released) => where(#[outcome, released]) {
     bad(Failure.merge(l1, l2))
 }
 // adjust when we potentially handle cancellation
+// guarantees resource acquiisition and cleanup
+// The first effect is for cleanup
+// The second effect is for acquisition
+// Third effect is for use
 bracket :: (a -> Whim {}) -> (a -> Whim b) -> Whim a -> Whim b
 export bracket = (completed, acquire, input) => chain(
   (res) => pipe(
@@ -153,31 +156,32 @@ export bracket = (completed, acquire, input) => chain(
   )(res),
   input,
 )
+// Runs the first effect after the second, regardless of whether it completed
 finally :: Whim {} -> Whim a -> Whim a
 export finally = (cleanup, w) => bracket(() => cleanup, () => w, pure({}))
 fromBreakableWish :: Breakable e => Wish e a -> Whim a
 export fromBreakableWish = fromWish(Failure.failWith)
 after :: Integer -> a -> Whim a
 export after = (ms, x) => pipe(
-  Ish.after(ms),
+  Wish.after(ms),
   Whim,
 )(x)
 badAfter :: Integer -> (a -> Failure) -> a -> Whim a
 export badAfter = (ms, toFail, x) => pipe(
-  Ish.after(ms),
-  chain(Ish.bad),
+  Wish.after(ms),
+  chain(Wish.bad),
   fromWish(toFail),
 )(x)
 withTimeout :: Integer -> Whim a -> Whim a
 export withTimeout = (ms, w) => pipe(
   toWish,
-  Ish.withTimeout(ms, Failure.Quitter(ms)),
+  Wish.withTimeout(ms, Failure.Quitter(ms)),
   Whim,
 )(w)
 parallelN :: Integer -> List (Whim a) -> Whim (List a)
 export parallelN = (n, whims) => pipe(
   map(toWish),
-  Ish.parallelN(n),
+  Wish.parallelN(n),
   Whim,
 )(whims)
 export parallel = parallelN(-1)
@@ -215,18 +219,18 @@ export collectN = (n, whims) => {
       index := index + 1
       return pipe(
         toWish,
-        Ish.bichain(
+        Wish.bichain(
           (e) => {
             branch := branch + 1
             return pipe(
               Failure.ContextualFailure(i, branch),
               Left,
-              Ish.good,
+              Wish.good,
             )(e)
           },
           pipe(
             Right,
-            Ish.good,
+            Wish.good,
           ),
         ),
       )(w)
@@ -247,12 +251,12 @@ export collectN = (n, whims) => {
     }
     return pipe(
       map(observe),
-      Ish.parallelN(n),
-      Ish.fulfill(badPath, endPath),
+      Wish.parallelN(n),
+      Wish.fulfill(badPath, endPath),
     )(whims)
   }
   return pipe(
-    Wish,
+    Wish.Wish,
     Whim,
   )(collectWishes)
 }
@@ -269,7 +273,7 @@ export raceN = (n, whims) => {
     record = (w) => {
       return pipe(
         toWish,
-        Ish.mapRej(
+        Wish.mapRej(
           (e) => {
             fails := List.append(Failure.ContextualFailure(index, branch, e), fails)
             index := index + 1
@@ -281,8 +285,8 @@ export raceN = (n, whims) => {
     }
     return pipe(
       map(record),
-      Ish.raceN(n),
-      Ish.fulfill(
+      Wish.raceN(n),
+      Wish.fulfill(
         () => pipe(
           Failure.MultiFailure,
           badPath,
@@ -292,12 +296,12 @@ export raceN = (n, whims) => {
     )(whims)
   }
   return pipe(
-    Wish,
+    Wish.Wish,
     Whim,
   )(fn)
 }
 export race = raceN(-1)
 export fulfill = (badPath, goodPath, whim) => pipe(
   toWish,
-  Ish.fulfill(badPath, goodPath),
+  Wish.fulfill(badPath, goodPath),
 )(whim)
