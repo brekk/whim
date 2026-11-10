@@ -53,7 +53,7 @@ type MyType = MyType(String, Integer)
 instance Breakable MyType {
   breaks = where {
     MyType(a, i) =>
-      F.Misfit("test", a ++ ":" ++ show(i), "whatever")
+      F.Failure("test", a ++ ":" ++ show(i), "whatever")
   }
 }
 Study.report(

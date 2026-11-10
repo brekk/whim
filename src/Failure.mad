@@ -9,9 +9,8 @@ import { MAX_INTEGER } from "@/Number"
 
 
 
-export type Misfit = Misfit(String, String, String)
 interface Breakable m {
-  breaks :: m -> Misfit
+  breaks :: m -> Failure
 }
 export type Failure
   = Failure(String, String, String)
@@ -54,10 +53,6 @@ export context = where {
 failWith :: Breakable m => m -> Failure
 export failWith = (e) => pipe(
   breaks,
-  where {
-    Misfit(a, b, c) =>
-      Failure(a, b, c)
-  },
 )(e)
 export toIndex = where {
   ContextualFailure(i, _, _) =>
