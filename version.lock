@@ -1,5 +1,5 @@
 {
-  "buildHash": "d989b5a9fc5799256bc2dec419f0272c",
+  "buildHash": "df81fc23a4497a479a1fc474931e4ad0",
   "jsApi": {
     "apiInstances": [
       "Semigroup (Whim n590647783936702427)",
@@ -11,7 +11,7 @@
     "apiAliases": {},
     "apiInterfaces": {
       "Breakable j590634589797163895": {
-        "breaks": "m -> Misfit"
+        "breaks": "m -> Failure"
       }
     },
     "apiNames": {
@@ -59,9 +59,6 @@
         "Quitter Integer",
         "MultiFailure (List Failure)",
         "ContextualFailure Integer Integer Failure"
-      ],
-      "src/Failure.mad#Misfit": [
-        "Misfit String String String"
       ],
       "Whim a": [
         "Whim (Wish Failure a)"
@@ -79,7 +76,7 @@
     "apiAliases": {},
     "apiInterfaces": {
       "Breakable j590634589797163895": {
-        "breaks": "m -> Misfit"
+        "breaks": "m -> Failure"
       }
     },
     "apiNames": {
@@ -128,13 +125,10 @@
         "MultiFailure (List Failure)",
         "ContextualFailure Integer Integer Failure"
       ],
-      "src/Failure.mad#Misfit": [
-        "Misfit String String String"
-      ],
       "Whim a": [
         "Whim (Wish Failure a)"
       ]
     }
   },
-  "versionHash": "47cd76e43f74bbc2e1baaf194d07e1fa"
+  "versionHash": "d233662f9c26d1a06118c93ef2fd1de9"
 }
