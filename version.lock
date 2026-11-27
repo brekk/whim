@@ -1,5 +1,5 @@
 {
-  "buildHash": "27e1c17c4fcfcc2c35d1a0541b373c3a",
+  "buildHash": "a91899a51ca411c1917a632ecd34910f",
   "jsApi": {
     "apiInstances": [
       "Semigroup (Whim n590647783936702427)",
@@ -142,5 +142,5 @@
       ]
     }
   },
-  "versionHash": "272f0a04b740763e0a29316bc4af89a4"
+  "versionHash": "3d4b11f6ee2a89fd5ace87c910cee04b"
 }
