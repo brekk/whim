@@ -97,21 +97,25 @@ export catchFail = (handler, w) => Whim(
 )
 catchBy :: (Failure -> Boolean) -> (Failure -> Whim a) -> Whim a -> Whim a
 catchBy = (check, handler, w) => catchFail((f) => check(f) ? handler(f) : bad(f), w)
-catchTag :: String -> (Failure -> Whim a) -> Whim a -> Whim a
-export catchTag = (tag, handler, w) => catchBy(
+catchMaybe :: (a -> b) -> String -> (Failure -> Whim a) -> Whim a -> Whim a
+export catchMaybe = (fn, x) => catchBy(
   pipe(
-    Failure.tag,
+    fn,
     where {
       Just(_t) =>
-        _t == tag
+        _t == x
 
       _ =>
         false
     },
   ),
-  handler,
-  w,
 )
+catchTag :: String -> (Failure -> Whim a) -> Whim a -> Whim a
+export catchTag = catchMaybe(Failure.tag)
+catchMessage :: String -> (Failure -> Whim a) -> Whim a -> Whim a
+export catchMessage = catchMaybe(Failure.message)
+catchContext :: String -> (Failure -> Whim a) -> Whim a -> Whim a
+export catchContext = catchMaybe(Failure.context)
 attempt :: Whim a -> Whim (Either Failure a)
 export attempt = (w) => Whim(
   pipe(
@@ -143,18 +147,104 @@ export settle = (outcome, released) => where(#[outcome, released]) {
     bad(Failure.merge(l1, l2))
 }
 // adjust when we potentially handle cancellation
-// guarantees resource acquiisition and cleanup
-// The first effect is for cleanup
-// The second effect is for acquisition
-// Third effect is for use
+// guarantees resource cleanup.
+// 1st: release. Runs after use, whether use succeeded or failed.
+// 2nd: use
+// 3rd: acquire
+// release does not run if the Whim is cancelled mid-use.
 bracket :: (a -> Whim {}) -> (a -> Whim b) -> Whim a -> Whim b
-export bracket = (completed, acquire, input) => chain(
+export bracket = (release, use, acquire) => chain(
   (res) => pipe(
-    acquire,
+    use,
     attempt,
-    chain((outcome) => chain(settle(outcome), attempt(completed(res)))),
+    chain((outcome) => chain(settle(outcome), attempt(release(res)))),
   )(res),
-  input,
+  acquire,
+)
+type WhimPhase a = Acquiring | Held(a) | Done
+start :: (Failure -> {}) -> (a -> {}) -> Whim a -> {}
+export start = (badPath, goodPath, w) => {
+  fulfill(badPath, goodPath, w)
+  return {}
+}
+export hope = start(() => {}, () => {})
+export bracketWithCancel = (release, use, acquire) => pipe(
+  Wish.Wish,
+  Whim,
+)(
+  (badPath, goodPath) => {
+    phase = Acquiring
+    cancelled = false
+    step = 0
+    cancelStep = Nothing
+    cancelCurrent = () => where(cancelStep) {
+      Just(c) =>
+        c()
+
+      _ =>
+        {}
+    }
+    deliver = (w) => if (cancelled) {
+      {}
+    } else do {
+      start(badPath, goodPath, w)
+    }
+    runStep = (_bad, _good, w) => {
+      step := step + 1
+      mine = step
+      c = fulfill(_bad, _good, w)
+      if (step == mine) do {
+        cancelStep := Just(c)
+      } else do {
+        {}
+      }
+    }
+    releaseThen = (res, outcome) => do {
+      phase := Done
+      runStep(attempt(release(res)), (_) => {}, (rez) => deliver(settle(outcome, rez)))
+    }
+    onAcquired = (res) => if (cancelled) do {
+      hope(release(res))
+    } else do {
+      phase := Held(res)
+      runStep(
+        attempt(use(res)),
+        (_) => {},
+        (outcome) => if (cancelled) do {
+          {}
+        } else do {
+          releaseThen(res, outcome)
+        },
+      )
+    }
+    runStep(
+      acquire,
+      (f) => do {
+        phase := Done
+        deliver(bad(f))
+      },
+      onAcquired,
+    )
+    return () => {
+      if (!cancelled) do {
+        cancelled := true
+        where(phase) {
+          Acquiring =>
+            cancelCurrent()
+
+          Held(res) =>
+            do {
+              phase := Done
+              cancelCurrent()
+              hope(release(res))
+            }
+
+          Done =>
+            {}
+        }
+      }
+    }
+  },
 )
 // Runs the first effect after the second, regardless of whether it completed
 finally :: Whim {} -> Whim a -> Whim a

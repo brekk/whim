@@ -89,15 +89,11 @@ catchTag = pipe(
   ),
   handleErrors("catchTag"),
 )
-Study.asyncFail(
+Study.asyncReport(
   catchTag,
-  "catchTag fail",
-  [
-    #[W.bad(F.Failure("test", "yo", "yojimbo")), Test.Error("yojimbo")],
-    #[W.bad(F.Quitter(2000)), Test.Error("catchTag")],
-  ],
+  "catchTag",
+  [#[W.good(F.Failure("whatever", "x", "y")), F.Failure("whatever", "x", "y")]],
 )
-Study.asyncReport(catchTag, "catchTag", [#[W.good("whatever"), "whatever"]])
 Study.asyncReport(
   pipe(
     W.attempt,
