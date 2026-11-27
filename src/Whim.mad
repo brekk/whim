@@ -201,29 +201,29 @@ export bracketWithCancel = (release, use, acquire) => pipe(
     }
     releaseThen = (res, outcome) => do {
       phase := Done
-      runStep(attempt(release(res)), (_) => {}, (rez) => deliver(settle(outcome, rez)))
+      runStep((_) => {}, (rez) => deliver(settle(outcome, rez)), attempt(release(res)))
     }
     onAcquired = (res) => if (cancelled) do {
       hope(release(res))
     } else do {
       phase := Held(res)
       runStep(
-        attempt(use(res)),
         (_) => {},
         (outcome) => if (cancelled) do {
           {}
         } else do {
           releaseThen(res, outcome)
         },
+        attempt(use(res)),
       )
     }
     runStep(
-      acquire,
       (f) => do {
         phase := Done
         deliver(bad(f))
       },
       onAcquired,
+      acquire,
     )
     return () => {
       if (!cancelled) do {
